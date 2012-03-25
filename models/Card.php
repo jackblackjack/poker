@@ -1,6 +1,7 @@
 <?php  
 class Card extends Common
 {
+    //test
 	public $suits = array(
 		'h'=>'Hearts', 'd'=>'Diamonds', 'c'=>'Clubs', 's'=>'Spades'
 	);
