@@ -3,7 +3,7 @@ class DefaultController extends Controller
 {
 	public function actionIndex()
 	{
-		$model = new Card('h', 'A');
+		$model = Dealer::model()->deck;
 		$this->render('index', array('model'=>$model));
 	}
 	

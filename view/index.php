@@ -1,3 +1,3 @@
 <?php
-    echo $model->suit . $model->value ;
+    print_r($model) ;
 ?>
