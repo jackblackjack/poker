@@ -1,11 +1,12 @@
 <?php  
 class Dealer extends Common
 {
-    private $deck = FALSE;
-    private $flop = FALSE;
-    private $turn = FALSE;
-    private $river = FALSE;
+    public $deck = array();
     public $table = array();
+    public $bank = 0;
+    public $smallBlind = 1;
+    public $bigBlind = 2;
+    public $players = array();
     
     public static $cardSuits = array(
         'h'=>'Hearts', 'd'=>'Diamonds', 'c'=>'Clubs', 's'=>'Spades'
@@ -16,59 +17,97 @@ class Dealer extends Common
         'Jack'=>11, 'Queen'=>12, 'King'=>13, 'Ace'=>14   
     );
     
-    public function getDeck()
+    public function __construct()
     {
-        if($his->deck) 
-            return $this->deck;
-        
-        $this->deck = array();
+        $players = array(
+            array('name'=>'Steve', 'stack'=>200),
+            array('name'=>'Nick', 'stack'=>200),
+            array('name'=>'Paul', 'stack'=>200),
+            array('name'=>'John', 'stack'=>200),
+        );
+        foreach($players as $player){
+            array_push($this->players, new Player($player));
+        };
+        $this->newRound();
+    }
+    
+    public function newRound()
+    {
+        $this->makeDeck();
+        $this->seatPlayers();
+        $this->giveCards();
+    }
+
+    public function deal()
+    {
+        switch(count($this->desk)){
+            case 0:
+                $this->showFlop();
+                break;
+            case 3:
+                $this->showTurn();
+                break;
+            case 4:
+                $this->showRiver();
+                break;
+        }
+        return $this->table;
+    }
+
+    protected function makeDeck()
+    {
         foreach(self::$cardSuits as $suit){
             foreach(self::$cardValues as $value=>$trash){
                 array_push($this->deck, array('suit'=>$suit, 'value'=>$value));
             }
         }
         shuffle($this->deck);
-        return $this->deck;
+    }
+
+    protected function seatPlayers()
+    {
+        $group = array();
+        foreach($this->players as $player){
+            if($player->stack > $this->smallBlind){
+                array_push($group, $player);
+            }
+        }
+        usort($group, function($a, $b){
+            return $a->seat > $b->seat ? 1 : -1;
+        });
+        
+        $this->players= array();
+        foreach($group as $key => $player){
+            $player->seat = $key;
+            if($key == 0) $player->seat = count($group);
+            array_push($this->players, $player);
+        }
+    }
+            
+    protected function giveCards()
+    {
+        foreach($this->players as $player){
+            $player->cards = array(array_shift($this->deck), array_pop($this->deck));
+        };        
+    }
+
+    protected function showFlop()
+    {
+        $this->table = array(array_shift($this->deck), array_shift($this->deck), array_shift($this->deck));
+    }
+    
+    protected function showTurn()
+    {
+        array_push($this->table, array_shift($this->deck)); 
+    }
+    
+    protected function showRiver()
+    {
+        array_push($this->table, array_shift($this->deck)); 
     }
     
     public static function model($className = __CLASS__) 
     {
         return new $className;
-    }
-    
-    public function deal($players)
-    {
-        foreach($players as $player){
-            $player->cards = array(array_shift($this->deck), array_pop($this->deck));
-        }
-    }
-    
-    public function flop()
-    {
-        if($this->flop)
-            return $this->flop;
-        
-        $this->flop = $this->table = array(array_shift($this->deck), array_shift($this->deck), array_shift($this->deck)); 
-        return $this->flop;
-    }
-    
-    public function turn()
-    {
-        if($this->turn)
-            return $this->turn;
-        
-        $this->turn = array_shift($this->deck);
-        array_push($this->table, $this->turn); 
-        return $this->turn;
-    }
-    
-    public function river()
-    {
-        if($this->river)
-            return $this->river;
-        
-        $this->river = array_shift($this->deck);
-        array_push($this->table, $this->river); 
-        return $this->river;
     }
 }

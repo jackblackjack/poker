@@ -3,8 +3,8 @@ class DefaultController extends Controller
 {
 	public function actionIndex()
 	{
-		$model = Dealer::model()->deck;
-		$this->render('index', array('model'=>$model));
+		$dealer = new Dealer;
+		$this->render('index', array('dealer'=>$dealer));
 	}
 	
 	public function actionView()

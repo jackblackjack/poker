@@ -1,3 +1,5 @@
 <?php
-    print_r($model) ;
+    foreach($dealer->players as $player){
+        $this->render('_player', array('player'=>$player));
+    };
 ?>
