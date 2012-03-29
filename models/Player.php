@@ -1,5 +1,5 @@
 <?php  
-class Player extends Common
+class Player extends ActiveRecord
 {
     public $name;
     public $live = TRUE;
@@ -10,10 +10,13 @@ class Player extends Common
     
     public function __construct($player)
     {
-        $this->name = $player['name'];
-        $this->stack = $player['stack'];
+        foreach($player as $field=>$value){
+            $this->$field = $value;
+        }
     }
-        
+    
+    
+
     public function bet($amount)
     {
         $this->stack -= $amount;
@@ -24,12 +27,12 @@ class Player extends Common
     {
         if($this->stack >= $amount){
             $this->stack -= $amount;
-            return true;
+            return $amount;
         }else{
             // возвращаем минусовую разницу для разделения банка
             $stack = $this->stack; 
             $this->stack = 0;
-            return $stack - $amount;
+            return $stack;
         }
     }
     

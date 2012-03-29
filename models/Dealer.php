@@ -1,5 +1,5 @@
 <?php  
-class Dealer extends Common
+class Dealer extends ActiveRecord
 {
     public $deck = array();
     public $table = array();
@@ -20,10 +20,10 @@ class Dealer extends Common
     public function __construct()
     {
         $players = array(
-            array('name'=>'Steve', 'stack'=>200),
-            array('name'=>'Nick', 'stack'=>200),
-            array('name'=>'Paul', 'stack'=>200),
-            array('name'=>'John', 'stack'=>200),
+            array('name'=>'Steve', 'stack'=>200, 'seat'=>3),
+            array('name'=>'Nick', 'stack'=>200, 'seat'=>2),
+            array('name'=>'Paul', 'stack'=>200, 'seat'=>1),
+            array('name'=>'John', 'stack'=>200, 'seat'=>4),
         );
         foreach($players as $player){
             array_push($this->players, new Player($player));
@@ -76,12 +76,13 @@ class Dealer extends Common
             return $a->seat > $b->seat ? 1 : -1;
         });
         
-        $this->players= array();
+        //$this->players= array();
+
         foreach($group as $key => $player){
-            $player->seat = $key;
-            if($key == 0) $player->seat = count($group);
-            array_push($this->players, $player);
+            $player->seat = $key == 0 ? count($group) - 1 : $key - 1;
+            $this->players[$player->seat] = $player;
         }
+        
     }
             
     protected function giveCards()

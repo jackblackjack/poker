@@ -9,6 +9,6 @@ class DefaultController extends Controller
 	
 	public function actionView()
 	{
-		echo 1234;
+		
 	}
 }

@@ -6,6 +6,7 @@ class App extends Common
 {
 	public $engine = array(
 		'engine.Controller',
+		'engine.ActiveRecord',
 	);
 	
 	public function getConfig()

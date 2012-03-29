@@ -1,10 +1,12 @@
 <div class="player">
-    <label>Player: </label>
     <span class="player_name"><?php echo $player->name; ?></span>
-    <label>Stack: </label>
-    <span class="player_stack"><?php echo $player->stack . ' $'; ?></span>
+    <span class="player_stack">(<?php echo $player->stack . '$'; ?>)</span>
+    <span class="player_stack"> - <?php echo $player->seat; ?></span>
+    <br />
     <?php  foreach($player->cards as $card):?>
-        <div class="card <?php echo $card['suit'] . ' ' . $card['value'] ; ?>"></div><br />    
+        
+            <img src="/files/deck/<?php echo strtolower($card['suit']) . '_' . strtolower($card['value']) ; ?>.png"/>
+           
     <?php endforeach ;?>
-</div>
+</div><br /> 
 
