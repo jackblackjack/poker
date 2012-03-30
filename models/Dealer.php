@@ -1,6 +1,13 @@
 <?php  
 class Dealer extends ActiveRecord
 {
+    const SQLTABLE = "dealer";
+    public static $sqlFields = array(
+        "id"=>"int(11) auto_increment primary key",
+        "deck"=>"text not null",
+        "bank"=>"int(11) default 0",
+        "players"=>"text not null"
+    );
     public $deck = array();
     public $table = array();
     public $bank = 0;
