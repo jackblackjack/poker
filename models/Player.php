@@ -1,50 +1,79 @@
 <?php  
 class Player extends ActiveRecord
 {
-    public $name;
-    public $live = TRUE;
+    const SQLTABLE = "player";
+    const CHILDREN = "Move";
+
+    public static $sqlFields = array(
+        "id"=>"int(11) auto_increment primary key",
+        "name"=>"varchar(255) not null",
+        "stack"=>"int(11) default 0",
+    );
+   // public $name = 'tester';
     public $cards = array();
     public $stack = 200;
+    public $amount = 0;
     public $seat = 0;
-
+    public $strategy;
+    public $moveName = "fold";
     
-    public function __construct($player)
+
+    public function move($round)
     {
-        foreach($player as $field=>$value){
-            $this->$field = $value;
-        }
+        $this->round = $round;
+        $this->think();
+        $move = new Move(array(
+                "player_id"=>$this->id,
+                "seat"=>$this->seat,
+                "round_id"=>$round->id,
+                "game_id"=>$round->game_id,
+                "round_name"=>$round->name,
+                "move_name"=>$this->moveName,
+                "amount"=>$this->amount,
+                "stack"=>$this->stack,
+            )
+        );
+        $move->save();
+        $this->round->save();
+    }
+
+    public function think()
+    {
+        $strategy = new Strategy(array('round'=>$this->round, 'player'=>$this));
+        $decision = $strategy->result;
+        $this->$decision['move']($decision['amount']);
     }
     
-    
-
     public function bet($amount)
     {
-        $this->stack -= $amount;
-        return $amount; 
+        $this->moveName = 'bet';
+        if($this->stack+$this->amount <= $amount) $this->call();
+        $this->stack -= $amount-$this->amount;
+        $this->amount = $amount;
     }
     
     public function call($amount)
     {
-        if($this->stack >= $amount){
+        $this->moveName = 'call';
+        if($this->stack >= $amount - $this->amount){
             $this->stack -= $amount;
-            return $amount;
+            $this->amount = $amount;
         }else{
-            // возвращаем минусовую разницу для разделения банка
-            $stack = $this->stack; 
+            $this->amount = $this->amount + $this->stack;
             $this->stack = 0;
-            return $stack;
         }
     }
     
     public function check()
     {
-       return true;
+        $this->moveName = 'check';
     }
     
     public function fold()
     {
-       $this->live = false;
-       return false;
+        $this->moveName = 'fold';
+        unset($this->round->players[$this->seat]);
+        $this->round->save();
     }        
     
     public static function model($className = __CLASS__) 

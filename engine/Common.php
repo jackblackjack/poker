@@ -2,6 +2,16 @@
 class Common
 {
     public static $className;
+    
+    public function __construct($params=false)
+    {
+        if($params && is_array($params)){
+            foreach($params as $field=>$value){
+                $this->$field = $value;
+            }
+        }
+    }
+    
 	public function __get($property)
 	{
 		$method = 'get' . ucfirst($property);
@@ -13,5 +23,10 @@ class Common
     public static function model($className = __CLASS__) 
     {
         return new $className;
+    }
+    
+    public function getClassName()
+    {
+        return  get_class($this);
     }
 }

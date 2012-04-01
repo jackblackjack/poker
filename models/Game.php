@@ -1,19 +1,23 @@
-<?php  
-class Dealer extends ActiveRecord
+<?php
+class Game extends ActiveRecord
 {
-    const SQLTABLE = "dealer";
+    const SQLTABLE = "game";
+    const CHILDREN = "Round";
+    
     public static $sqlFields = array(
         "id"=>"int(11) auto_increment primary key",
-        "deck"=>"text not null",
-        "bank"=>"int(11) default 0",
-        "players"=>"text not null"
+        "session_id"=>"int(11) not null",
+        "live"=>"int(1) default 0",
+        "players"=>"text not null",
+        "SB"=>"int(11) default 1",
+        "BB"=>"int(11) default 2",
+        "stack"=>"int(11) default 200",
     );
+    public $live = 1;
+    public $round;
+    public $bank = 0;
     public $deck = array();
     public $table = array();
-    public $bank = 0;
-    public $smallBlind = 1;
-    public $bigBlind = 2;
-    public $players = array();
     
     public static $cardSuits = array(
         'h'=>'Hearts', 'd'=>'Diamonds', 'c'=>'Clubs', 's'=>'Spades'
@@ -24,30 +28,37 @@ class Dealer extends ActiveRecord
         'Jack'=>11, 'Queen'=>12, 'King'=>13, 'Ace'=>14   
     );
     
-    public function __construct()
+    public function run()
     {
-        $players = array(
-            array('name'=>'Steve', 'stack'=>200, 'seat'=>3),
-            array('name'=>'Nick', 'stack'=>200, 'seat'=>2),
-            array('name'=>'Paul', 'stack'=>200, 'seat'=>1),
-            array('name'=>'John', 'stack'=>200, 'seat'=>4),
-        );
-        foreach($players as $player){
-            array_push($this->players, new Player($player));
-        };
-        $this->newRound();
-    }
-    
-    public function newRound()
-    {
-        $this->makeDeck();
-        $this->seatPlayers();
-        $this->giveCards();
+        if(!$this->id) $this->save();
+        
+        $lastRound = $this->lastChild('Round');
+        
+        if($lastRound && count($lastRound->players)>1){
+            if($lastRound->live){
+                $this->round = $lastRound;
+                return true;
+            }
+            $this->deck = $lastRound->deck;
+            $this->players = $lastRound->players;
+            $this->bank = $lastRound->bank;
+            $this->deal();
+        }else{
+            $this->seatPlayers();
+            $this->giveCards();            
+        }
+        
+        $this->round = new Round(array(
+            'players'=>$this->players,
+            'bank'=>$this->bank,
+            'game_id'=>$this->id,
+        ));
+        $this->round->run();
     }
 
     public function deal()
     {
-        switch(count($this->desk)){
+        switch(count($this->table)){
             case 0:
                 $this->showFlop();
                 break;
@@ -59,16 +70,6 @@ class Dealer extends ActiveRecord
                 break;
         }
         return $this->table;
-    }
-
-    protected function makeDeck()
-    {
-        foreach(self::$cardSuits as $suit){
-            foreach(self::$cardValues as $value=>$trash){
-                array_push($this->deck, array('suit'=>$suit, 'value'=>$value));
-            }
-        }
-        shuffle($this->deck);
     }
 
     protected function seatPlayers()
@@ -117,5 +118,18 @@ class Dealer extends ActiveRecord
     public static function model($className = __CLASS__) 
     {
         return new $className;
+    }
+    
+
+    protected function getDeck()
+    {
+        if($this->deck) return $this->deck;
+        foreach(self::$cardSuits as $suit){
+            foreach(self::$cardValues as $value=>$trash){
+                array_push($this->deck, array('suit'=>$suit, 'value'=>$value));
+            }
+        }
+        shuffle($this->deck);
+        return $this->deck;
     }
 }

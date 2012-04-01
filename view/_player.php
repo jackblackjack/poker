@@ -8,5 +8,4 @@
             <img src="/files/deck/<?php echo strtolower($card['suit']) . '_' . strtolower($card['value']) ; ?>.png"/>
            
     <?php endforeach ;?>
-</div><br /> 
-
+</div><br />
