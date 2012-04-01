@@ -10,6 +10,7 @@ class Player extends ActiveRecord
         "stack"=>"int(11) default 0",
     );
    // public $name = 'tester';
+    public $live = 1;
     public $cards = array();
     public $stack = 200;
     public $amount = 0;
@@ -33,12 +34,18 @@ class Player extends ActiveRecord
                 "stack"=>$this->stack,
             )
         );
+        
         $move->save();
         $this->round->save();
     }
 
     public function think()
     {
+        if($this->amount == $this->round->amount){
+            $this->round->closeRound();
+            return;
+        }
+        
         $strategy = new Strategy(array('round'=>$this->round, 'player'=>$this));
         $decision = $strategy->result;
         $this->$decision['move']($decision['amount']);

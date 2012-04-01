@@ -37,6 +37,7 @@ class Game extends ActiveRecord
         if($lastRound && count($lastRound->players)>1){
             if($lastRound->live){
                 $this->round = $lastRound;
+                $this->round->run();
                 return true;
             }
             $this->deck = $lastRound->deck;
@@ -88,6 +89,7 @@ class Game extends ActiveRecord
 
         foreach($group as $key => $player){
             $player->seat = $key == 0 ? count($group) - 1 : $key - 1;
+            $player->live = 1;
             $this->players[$player->seat] = $player;
         }
         

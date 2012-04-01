@@ -12,7 +12,15 @@ class Strategy extends ActiveRecord
     
     public function getResult()
     {
-        return array('move'=>'bet', 'amount'=>10);
+        if($this->round->name == 'preflop'){
+            switch($player->seat){
+                case 0: return array('move'=>'bet', 'amount'=>$this->round->game->SB); 
+                    break;
+                case 1: return array('move'=>'bet', 'amount'=>$this->round->game->BB); 
+                    break;
+            }
+        }
+        return array('move'=>'bet', 'amount'=>15);
     }
     
     public function getRoundHistory()

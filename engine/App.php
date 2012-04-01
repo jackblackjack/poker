@@ -35,7 +35,10 @@ class App extends Common
 
 	public function getUrl()
 	{
-		return explode('/', $_SERVER['REQUEST_URI']);
+	    $str = $_SERVER['REQUEST_URI'];
+        $get = strpos($str, '?');
+        $str = $get ? substr($str, 0, $get) : $str; 
+		return explode('/', $str);
 	}
 
 	public function getController()

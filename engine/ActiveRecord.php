@@ -209,7 +209,7 @@ class ActiveRecord extends Common
     public function lastChild($className)
     {
         $parentNameId = strtolower($this->className).'_id';
-        $item = $className::model()->findAllByAttributes(array($parentNameId=>$this->id), array('order'=>'id DESC', 'group'=>$parentNameId));
+        $item = $className::model()->findAllByAttributes(array($parentNameId=>$this->id), array('order'=>'id DESC', 'limit'=>1));
         return $item ? $item[0] : false;
     }
     
