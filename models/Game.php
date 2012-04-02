@@ -84,8 +84,6 @@ class Game extends ActiveRecord
         usort($group, function($a, $b){
             return $a->seat > $b->seat ? 1 : -1;
         });
-        
-        //$this->players= array();
 
         foreach($group as $key => $player){
             $player->seat = $key == 0 ? count($group) - 1 : $key - 1;

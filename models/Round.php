@@ -30,8 +30,13 @@ class Round extends ActiveRecord
             $this->bank += $lastMove->amount;
             $this->amount = $lastMove->amount;
         }
-        $this->players[$this->activeSeat]->move($this);
-        $this->save();
+        $activePlayer = $this->players[$this->activeSeat];
+        if($activePlayer->amount == $this->amount){
+            $this->closeRound();
+        }else{
+            $this->players[$this->activeSeat]->move($this);
+            $this->save();
+        }
     }
     
     function preflop()
@@ -56,7 +61,7 @@ class Round extends ActiveRecord
     
     public function showDown()
     {
-        $winner = Position::model()->comparePlayers($this->table, $this->players);
+        $winner = Combination::model()->comparePlayers($this->table, $this->players);
         $this->players[$winner->seat]->stack += $this->bank;
     }
     
@@ -75,13 +80,13 @@ class Round extends ActiveRecord
     
     public function closeRound()
     {
-        $players = $this->players;
-        if(count($players) == 1){
-            $player = array_pop($players);
+        if(count($this->players) == 1){
+            $player = end($this->players);
             $player->stack += $this->bank;
             $this->endGame();
         }else if($this->name == 'river'){
             $this->showDown();
+            $this->endGame();
         }
         
         foreach($this->players as $player){

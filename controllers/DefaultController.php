@@ -3,10 +3,22 @@ class DefaultController extends Controller
 {
 	public function actionIndex()
 	{
-        $session = Session::model()->findByPk(9);
-        $session->run();
+        //$session = Session::model()->findByPk(9);
+        //$session->run();
         //$session->game->delete();
         //$session->run();
+        $combination = new Combination(array(
+            'cards'=>array(
+                array('suit'=>'Diamonds', 'value'=>'Jack'),
+                array('suit'=>'Diamonds', 'value'=>'Jack'),
+                array('suit'=>'Diamonds', 'value'=>'Jack'),
+                array('suit'=>'Diamonds', 'value'=>'Jack'),
+                array('suit'=>'Diamonds', 'value'=>'Jack'),
+                array('suit'=>'Diamonds', 'value'=>'Jack'),
+                array('suit'=>'Diamonds', 'value'=>'Jack'),
+            )
+        ));
+        print_r($combination->handValue);
 	}
 	
 	public function actionView()
