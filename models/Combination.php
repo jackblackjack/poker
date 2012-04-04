@@ -5,11 +5,11 @@ class Combination extends Common
     public $suits = array();
     public $values = array();
     public $probabiliy = 0;
-    private $handValue = array('combinaionValue'=>0, 'combinationHeight'=>0, 'handHeight'=>0);
+    private $handValue;
     
     public $chart = array(
-        array(0,0)=>0, array(2,0)=>1, array(2,2)=>2, array(3,0)=>3, 'straight'=>4, 
-        'flush'=>5, array(3,2)=>6, array(4,0)=>7, 'straightFlush'=>8
+        0=>'Hight card', 20=>'Pair', 22=>'Two pairs', 30=>'Three of a kind', 31=>'Straight', 
+        31.5=>'Flush', 32=>'Full house', 40=>'Four of a kind', 50=>'Straight flush'
     );
     
     public static $cardSuits = array(
@@ -38,7 +38,7 @@ class Combination extends Common
         $this->getDuplicates();
         $this->getFlush();
         $this->getStraight();
-        return $this->handValue;
+        return array($this->combinaionValue, $this->combinationHeight, $this->handHeight);
     }
     
     public function comparePlayers($table, $players)
@@ -58,52 +58,72 @@ class Combination extends Common
         $duplicates = array_count_values($this->values);
         asort($duplicates);
         // NO DUPLICATES
-        if(end($duplicates) == 1){
-            $this->handValue['combinaionValue'] = 0;
-            $this->handValue['handHeight'] = $this->handHeight;
-            return;
-        }
+        if(end($duplicates) == 1)return;
         
         $high = array(end(array_keys($duplicates)) => array_pop($duplicates));
         // ONE DUPLICATE (FROM 2 TO 4 OF A KIND)
-        if(!$duplicates || end($duplicates) == 1 || $high[0] == 4){
-            $this->handValue['combinaionValue'] = $this->chart[array($high[0], 0)];
-            $this->nandValue['combinationHeight'] = key($high);
-            $values = array_diff($this->values, $high);
-            $this->handValue['handHeight'] = $this->getHandHeight($values);
+        if(!$duplicates || end($duplicates) == 1 || end($high) == 4){
+            $this->combinaionValue = end($high)*10;
+            $this->combinationHeight = key($high);
             return;
         }
         //TWO DUPLICATES (2:2, 2:3)
         $low = array(end(array_keys($duplicates)) => 2);
-        $this->handValue['combinaionValue'] = $this->chart[array($high[0], 2)];
-        $this->nandValue['combinationHeight'] 
-            = $this->getHandHeight(array(end(array_keys($duplicates)), key($high)));
-        if($high[0]==2 && count($this->values) > 4){
-            $values = array_diff($this->values, $high);
-            $values = array_diff($values, $low);
-            $this->handValue['handHeight'] = $this->getHandHeight($values);
-        }
-        
+        $this->combinaionValue = end($high)*10+2;
+        $this->combinationHeight = $this->getHandHeight(array(key($low), key($high)));
     }
     
-    public function getFlush()
+    public function getFlush($array=false)
     {
         $array = array_count_values($this->suits);
         asort($array);
-        if(end($array) == 5&& $this->handValue['combinaionValue'] < 6){
-            $this->handValue['combinaionValue'] == 5;
-            $this->nandValue['combinationHeight'] = '';////////////
-        } 
+        
+        if(end($array) > 4 && $this->combinaionValue < 32){
+            $this->combinaionValue = 31.5;
+            $values = array();
+            foreach($this->cards as $card){
+                if($card['suit'] == end(array_keys($array))){
+                    $values[] = self::$cardValues[$card['value']];
+                }
+            }
+            asort($values);
+            $values = array_slice($values, -5);
+            $this->combinationHeight = $this->getHandHeight($values);
+            return true;
+        }
+        return false;
     }
     
     public function getStraight()
     {
+        if($this->combinaionValue > 31) return;
+        
         $array = array_unique($this->values);
+        if(in_array(14, $array)) array_push($array, 1); //ace as 1 too
         if(count($array) < 5) return;
-        if(in_array(14, $array)) array_push(1); //ace as 1 too
-        asort($aray);
-        ///////////////////        
-        $this->nandValue['combinationHeight'] = $this->getHandHeight($array);
+        arsort($array);
+        
+        $high = 1;
+        $card = current($array);
+        
+        foreach($array as $key=>$value){
+            if($value == $card-1 && $high <5){
+                if($high == 1) array_unshift($array, $card);
+                $high++;
+            }else if($high < 5){
+                $hight = 0;
+                unset($array[$key]);
+            }
+            $card = $value;
+        }
+
+        if($high > 4){
+            $this->combinaionValue = 31;
+            asort($array);
+            $this->combinationHeight = array_pop($array);
+            return true;
+        }
+        return false;
     }
     
     public function getHandHeight($values=false)
@@ -113,7 +133,7 @@ class Combination extends Common
         usort($values, function($a, $b){
             return $a < $b ? 1 : -1; 
         });
-        $result = 0;
+        $result = '';
         foreach($values as $value){
             $prefix = $value < 10 ? 0 : '';
             $result .= $prefix.$value;
