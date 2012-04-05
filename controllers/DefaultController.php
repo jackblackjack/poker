@@ -10,12 +10,12 @@ class DefaultController extends Controller
         $combination = new Combination(array(
             'cards'=>array(
                 array('suit'=>'Diamonds', 'value'=>'Jack'),
-                array('suit'=>'Hearts', 'value'=>'Queen'),
+                array('suit'=>'Hearts', 'value'=>'King'),
                 array('suit'=>'Diamonds', 'value'=>'King'),
                 array('suit'=>'Hearts', 'value'=>10),
-                array('suit'=>'Diamonds', 'value'=>3),
+                array('suit'=>'Diamonds', 'value'=>'Queen'),
                 array('suit'=>'Diamonds', 'value'=>5),
-                array('suit'=>'Clubs', 'value'=>'Ace'),
+                array('suit'=>'Clubs', 'value'=>9),
             )
         ));
         print_r($combination->handValue);

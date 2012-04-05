@@ -57,20 +57,11 @@ class Combination extends Common
     {
         $duplicates = array_count_values($this->values);
         asort($duplicates);
-        // NO DUPLICATES
-        if(end($duplicates) == 1)return;
-        
-        $high = array(end(array_keys($duplicates)) => array_pop($duplicates));
-        // ONE DUPLICATE (FROM 2 TO 4 OF A KIND)
-        if(!$duplicates || end($duplicates) == 1 || end($high) == 4){
-            $this->combinaionValue = end($high)*10;
-            $this->combinationHeight = key($high);
-            return;
-        }
-        //TWO DUPLICATES (2:2, 2:3)
-        $low = array(end(array_keys($duplicates)) => 2);
-        $this->combinaionValue = end($high)*10+2;
-        $this->combinationHeight = $this->getHandHeight(array(key($low), key($high)));
+        if(end($duplicates) == 1)return false;
+        $this->combinaionValue = implode('',array_reverse(array_slice($duplicates, -2)))*1;
+        if(prev($duplicates) == 1)  $this->combinationHeight = $this->handHeight;
+        else $this->combinationHeight = $this->getHandHeight(array_slice(array_keys($duplicates),-2));
+        return true;
     }
     
     public function getFlush($array=false)
@@ -79,7 +70,7 @@ class Combination extends Common
         asort($array);
         
         if(end($array) > 4 && $this->combinaionValue < 32){
-            $this->combinaionValue = 31.5;
+            $this->combinaionValue = 31.2;
             $values = array();
             foreach($this->cards as $card){
                 if($card['suit'] == end(array_keys($array))){
@@ -96,32 +87,17 @@ class Combination extends Common
     
     public function getStraight()
     {
-        if($this->combinaionValue > 31) return;
-        
+        if($this->combinaionValue > 31.1) return;
         $array = array_unique($this->values);
         if(in_array(14, $array)) array_push($array, 1); //ace as 1 too
-        if(count($array) < 5) return;
         arsort($array);
-        
-        $high = 1;
-        $card = current($array);
-        
-        foreach($array as $key=>$value){
-            if($value == $card-1 && $high <5){
-                if($high == 1) array_unshift($array, $card);
-                $high++;
-            }else if($high < 5){
-                $hight = 0;
-                unset($array[$key]);
-            }
-            $card = $value;
-        }
-
-        if($high > 4){
-            $this->combinaionValue = 31;
-            asort($array);
-            $this->combinationHeight = array_pop($array);
-            return true;
+        $array = array_combine(range((count($array)-1),0), $array);
+        for($i=count($array)-1; $i>0; $i--){
+            if(isset($array[$i-4]) && $array[$i-4] == $array[$i]-4){
+                $this->combinaionValue = 31.1;
+                $this->combinationHeight = $array[$i];
+                return true;
+            } 
         }
         return false;
     }
