@@ -27,10 +27,10 @@ class Combination extends Common
         $this->values = array();
         
         foreach($this->cards as $card){
-            array_push($this->suits, $card['suit']);
-            array_push($this->values, $this::$cardValues[$card['value']]);
+            $this->suits[] = $card['suit'];
+            $this->values[] = $this::$cardValues[$card['value']];
         }
-        asort($this->values);
+        arsort($this->values);
     }
 
     public function getHandValue(){
@@ -56,11 +56,20 @@ class Combination extends Common
     public function getDuplicates()
     {
         $duplicates = array_count_values($this->values);
-        asort($duplicates);
-        if(end($duplicates) == 1)return false;
-        $this->combinaionValue = implode('',array_reverse(array_slice($duplicates, -2)))*1;
-        if(prev($duplicates) == 1)  $this->combinationHeight = $this->handHeight;
-        else $this->combinationHeight = $this->getHandHeight(array_slice(array_keys($duplicates),-2));
+        arsort($duplicates);
+        $this->combinaionValue = implode('', array_slice($duplicates, 0, 2))*1;
+        $duplicates = array_diff($duplicates, array(1));//leave only duplicates
+        switch(count($duplicates)){
+            case 0: return false; break;
+            case 1: $this->combinaionValue = reset($duplicates)*10; 
+                    $this->combinationHeight = key($duplicates); break;
+            case 2: $this->combinationHeight = $this->getHandHeight(array_slice(array_keys($duplicates),0, 2)); break;
+            case 3: $res = reset($duplicates)==3 ? key($duplicates) : false;
+                    $duplicates = array_diff($duplicates, array(3));
+                    krsort($duplicates);
+                    $res = $res ? array($res, key($duplicates)) : array_slice(array_keys($duplicates),0, 2);
+                    $this->combinationHeight = $this->getHandHeight($res); break;
+        }
         return true;
     }
     
@@ -105,10 +114,6 @@ class Combination extends Common
     public function getHandHeight($values=false)
     {
         if($values===false) $values = $this->values;
-        
-        usort($values, function($a, $b){
-            return $a < $b ? 1 : -1; 
-        });
         $result = '';
         foreach($values as $value){
             $prefix = $value < 10 ? 0 : '';

@@ -11,11 +11,11 @@ class DefaultController extends Controller
             'cards'=>array(
                 array('suit'=>'Diamonds', 'value'=>'Jack'),
                 array('suit'=>'Hearts', 'value'=>'King'),
-                array('suit'=>'Diamonds', 'value'=>'King'),
+                array('suit'=>'Diamonds', 'value'=>10),
                 array('suit'=>'Hearts', 'value'=>10),
-                array('suit'=>'Diamonds', 'value'=>'Queen'),
-                array('suit'=>'Diamonds', 'value'=>5),
-                array('suit'=>'Clubs', 'value'=>9),
+                array('suit'=>'Diamonds', 'value'=>'King'),
+                array('suit'=>'Diamonds', 'value'=>'Jack'),
+                array('suit'=>'Clubs', 'value'=>10),
             )
         ));
         print_r($combination->handValue);
