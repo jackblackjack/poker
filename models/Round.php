@@ -13,36 +13,36 @@ class Round extends ActiveRecord
         "game_id"=>"int(11) not null",
         "bank"=>"int(11) not null",
         "board"=>"text not null",
+        "amount"=>"int(11) default 0",
+        "deck"=>"text not null",
     );
     public $live = 1;
     public $activeSeat = 0;
-    public $name = 'preflop';
     public $bank = 0;
     public $amount = 0;
-    
-    public $chart = array(
-        11=>'Hight card', 20=>'Pair', 22=>'Two pairs', 30=>'Three of a kind', 31.1=>'Straight', 
-        31.2=>'Flush', 32=>'Full house', 40=>'Four of a kind', 50=>'Straight flush'
-    );
+    public $board = array(); 
     
     public function run()
     {
         if(!$this->id) $this->save();
-        if(!$this->live) return $this->parent->run();
-
+        if(!$this->live || !$this->players) return $this->parent->run();
+        
         $lastMove = $this->lastChild;
         if($lastMove){
             $this->activeSeat = $this->nextActiveSeat($lastMove->seat);
             $this->bank += $lastMove->amount;
             $this->amount = $lastMove->amount;
         }
+        if(!$this->activeSeat) $this->activeSeat = 0;
         $activePlayer = $this->players[$this->activeSeat];
-        if($this->amount > 0 && $activePlayer->amount == $this->amount){
+        if($this->amount == $activePlayer->amount && ($this->amount > 0 
+            || count($this->children) == count($this->players)))
+        {
             $this->closeRound();
             $this->save();
             return $this->parent->run();
         }else{
-            $this->players[$this->activeSeat]->move($this);
+            $activePlayer->move($this);
             $this->save();
         }
         return $this;
@@ -50,21 +50,21 @@ class Round extends ActiveRecord
     
     public function showDown()
     {
-        $winner = Combination::model()->comparePlayers($this->board, $this->players);
-        $this->players[$winner->seat]->stack += $this->bank;
+        $winner = Brain::model()->comparePlayers($this->players);
+        $winner->stack += $this->bank;
     }
     
     public function nextActiveSeat($seat=0)
     {
-        $players = $this->players;
-        if(!$players) return false;
-        
-        for ($i = $seat+1; $i < count($players); $i++){
-            if(isset($players[$i]) && $players[$i]->live){
-                return $i;
-            }
+        if(!$this->players) return false;
+        //make array starting from active seat
+        $players = array_merge(
+            array_slice($this->players, $seat),
+            array_slice($this->players, 0,$seat)
+        );
+        for($i=1; $i<count($players); $i++){
+            if($players[$i]->live) return $players[$i]->seat;
         }
-        return min(array_keys($players));
     }
     
     public function closeRound()
@@ -73,7 +73,7 @@ class Round extends ActiveRecord
             $player = end($this->players);
             $player->stack += $this->bank;
             $this->endGame();
-        }else if($this->name == 'river'){
+        }else if($this->name == 'showDown'){
             $this->showDown();
             $this->endGame();
         }
@@ -89,6 +89,17 @@ class Round extends ActiveRecord
         $parent = $this->parent;
         $parent->live = 0;
         $parent->save();
+    }
+
+    public function getName()
+    {
+        switch(count($this->parent->children)){
+            case 1: return 'preflop'; break;
+            case 2: return 'flop'; break;
+            case 3: return 'turn'; break;
+            case 4: return 'river'; break;
+            case 5: return 'showDown'; break;
+        }
     }
     
     public static function model($params=false) 

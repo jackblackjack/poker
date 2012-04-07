@@ -4,8 +4,11 @@
     <span class="player_seat"> - <?php echo $player->seat; ?></span>
     <br />
     <?php  foreach($player->cards as $card):?>
-        
             <img src="/files/deck/<?php echo strtolower($card['suit']) . '_' . strtolower($card['value']) ; ?>.png"/>
-           
     <?php endforeach ;?>
-</div><br />
+    </br />
+    <span class="player_move"> <?php echo $player->moveName . "-" . $player->amount; ?></span>
+    <?php  if($player->handValue):?>
+        <span class="player_hand_value"> <?php echo $player->handValue; ?></span>
+    <?php  endif;?>
+</div>

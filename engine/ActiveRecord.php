@@ -206,11 +206,11 @@ class ActiveRecord extends Common
         return $models ? $models[count($models)-1] : false; 
     }
     
-    public function lastChild($className=false)
+    public function getLastChild()
     {
-        if(!$className) $className = $this::CHILDREN; 
-        $filed = strtolower($this->className).'_id';
-        $item = $className::model()->findAllByAttributes(array($filed=>$this->id), array('order'=>'id DESC', 'limit'=>1));
+        $className = $this::CHILDREN; 
+        $field = strtolower($this->className).'_id';
+        $item = $className::model()->findAllByAttributes(array($field=>$this->id), array('order'=>'id DESC', 'limit'=>1));
         return $item ? $item[0] : false;
     }
     
@@ -220,6 +220,14 @@ class ActiveRecord extends Common
         if(!$className) return false;
         $field = strtolower($className).'_id';
         return $className::model()->findByPk($this->$field);
+    }
+    
+    public function getChildren($params = array())
+    {
+        $className = $this::CHILDREN;
+        $field = strtolower($this->className).'_id';
+        $query = array_merge($params, array($field=>$this->id));
+        return $className::model()->findAllByAttributes($query);
     }
     
     public static function model($className = __CLASS__) 

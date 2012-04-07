@@ -7,33 +7,63 @@ class Brain extends ActiveRecord
         "id"=>"int(11) auto_increment primary key",
         "player_id"=>"int(11) not null",
     );
-    public $round;
     public $player;
+    public $handValue;
+    public $cards;
     
     public function getResult()
     {
-        if($this->round->name == 'preflop'){
-            switch($player->seat){
-                case 0: return array('move'=>'bet', 'amount'=>$this->round->game->SB); 
-                    break;
-                case 1: return array('move'=>'bet', 'amount'=>$this->round->game->BB); 
-                    break;
-            }
-        }
-        return array('move'=>'bet', 'amount'=>15);
+        $roundName = $this->player->round->name;
+        $this->cards = array('cards' => array_merge($this->player->round->board, $this->player->cards));
+        $this->handValue = Combination::model($this->cards)->handValue; 
+        
+        return $this->$roundName();
     }
     
-    public function comparePlayers($board, $players)
+    public function preflop()
     {
-        $values = array();
-        foreach($players as $player){
-            $cards = array_merge($board, $player->cards);
-            $player->handValue = Combination::model($cards)->handValue;
+        switch($this->player->seat){
+            case 0: return $this->player->round->bank == 0 
+                ? array('bet'=>$this->player->round->parent->parent->SB) 
+                : array('call'=>$this->player->round->amount - $this->player->amount);
+                break;
+            case 1: return $this->player->round->bank == 0 
+                ? array('bet'=>$this->player->round->parent->parent->BB) 
+                : array('call'=>$this->player->round->amount - $this->player->amount); 
+                break;
         }
+        if((int)substr($this->handValue, 0, 2) > 11)
+            return array('bet'=>$this->player->round->bank / 1.5);
+        else return array('call'=>$this->player->round->amount);
+    }
+    
+    public function flop()
+    {
+        return array('call'=>$this->player->round->amount - $this->player->amount);
+    }
+    
+    public function turn()
+    {
+        return array('call'=>$this->player->round->amount - $this->player->amount);
+    }
+    
+    
+    public function river()
+    {
+        return array('call'=>$this->player->round->amount - $this->player->amount);
+    }
+
+    public function showDown()
+    {
+        return array('show'=>$this->handValue);
+    }
+    
+    public function comparePlayers($players)
+    {
         usort($players, function($a, $b){
             return $a->handValue > $b->handValue;
         });
-        return $players;
+        return end($players);
     }
     
     public function getRoundHistory()

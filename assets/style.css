@@ -1,0 +1,13 @@
+.player {
+    float: left;
+    padding: 20px;
+    border: 3px double;
+    margin: 20px;
+}
+.board{
+    clear: both;
+    width: 100%;
+}
+.board button{
+    float: right;
+}

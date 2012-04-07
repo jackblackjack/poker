@@ -3,13 +3,24 @@ class Player extends ActiveRecord
 {
     const SQLTABLE = "player";
     const CHILDREN = "Move";
+    
 
     public static $sqlFields = array(
         "id"=>"int(11) auto_increment primary key",
         "name"=>"varchar(255) not null",
         "stack"=>"int(11) default 0",
     );
-   // public $name = 'tester';
+    
+    public $chart = array(
+        11=>'Hight card', 20=>'Pair', 22=>'Two pairs', 30=>'Three of a kind', 31.1=>'Straight', 
+        31.2=>'Flush', 32=>'Full house', 40=>'Four of a kind', 50=>'Straight flush'
+    );
+    
+    public $cardValues = array(
+        2=>2, 3=>3, 4=>4, 5=>5, 6=>6, 7=>7, 8=>8, 9=>9, 10=>10, 
+        11=>'Jack', 12=>'Queen', 13=>'King', 14=>'Ace'   
+    );
+    
     public $live = 1;
     public $cards = array();
     public $stack = 200;
@@ -37,13 +48,10 @@ class Player extends ActiveRecord
 
     public function think()
     {
-        if($this->amount == $this->round->amount){
-            $this->round->closeRound();
-            return;
-        }
-
-        $decision = Brain::model(array('round'=>$this->round, 'player'=>$this))->result;
-        $this->$decision['move']($decision['amount']);
+        $decision = Brain::model(array('player'=>$this))->result;
+        if($this->round->name != 'showDown') $this->round->bank += end($decision);
+        $command = key($decision);
+        $this->$command(end($decision));
     }
     
     public function bet($amount)
@@ -60,6 +68,7 @@ class Player extends ActiveRecord
         if($this->stack >= $amount - $this->amount){
             $this->stack -= $amount;
             $this->amount = $amount;
+            
         }else{
             $this->amount = $this->amount + $this->stack;
             $this->stack = 0;
@@ -77,6 +86,15 @@ class Player extends ActiveRecord
         //$this->round->players[$this->seat]->live = 0;
         $this->live = 0;
     }        
+    
+    public function show($handValue)
+    {
+        $this->moveName = 'show';
+        $combinationValue = substr($handValue, 0, 7)*1;
+        $handHeight = substr($handValue, 8, 2)*1; 
+        $this->handValue = $combinationValue . ', ' . $this->cardValues[$handHeight] . ' high';
+        $this->live = 0;
+    }
     
     public static function model($params=false) 
     {

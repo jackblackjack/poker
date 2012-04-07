@@ -35,13 +35,14 @@ class Game extends ActiveRecord
         if($lastRound && count($lastRound->players)>1){
             if($lastRound->live)
                 return $lastRound->run();
-
+            $this->board = $lastRound->board;
             $this->deck = $lastRound->deck;
             $this->players = $lastRound->players;
             $this->bank = $lastRound->bank;
             $this->deal();
         }else{
             $this->seatPlayers();
+            $this->makeDeck();
             $this->giveCards();            
         }
         
@@ -50,6 +51,7 @@ class Game extends ActiveRecord
             'players'=>$this->players,
             'bank'=>$this->bank,
             'board'=>$this->board,
+            'deck'=>$this->deck,
         ))->run();
     }
 
@@ -92,7 +94,7 @@ class Game extends ActiveRecord
     protected function giveCards()
     {
         foreach($this->players as $player){
-            $player->cards = array(array_shift($this->deck), array_pop($this->deck));
+            $player->cards = array(array_pop($this->deck), array_pop($this->deck));
         };        
     }
 
@@ -111,16 +113,14 @@ class Game extends ActiveRecord
         array_push($this->board, array_shift($this->deck)); 
     }
     
-    protected function getDeck()
+    protected function makeDeck()
     {
-        if($this->deck) return $this->deck;
         foreach(self::$cardSuits as $suit){
             foreach(self::$cardValues as $value=>$trash){
                 array_push($this->deck, array('suit'=>$suit, 'value'=>$value));
             }
         }
         shuffle($this->deck);
-        return $this->deck;
     }
     
     public static function model($params=false) 

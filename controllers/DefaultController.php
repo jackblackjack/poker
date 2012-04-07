@@ -3,7 +3,7 @@ class DefaultController extends Controller
 {
 	public function actionIndex()
 	{
-        $session = new Session;
+        $session = Session::model()->findByPk(35);
         $round = $session->run();
         $this->render('index', array('round'=>$round));
 
@@ -16,12 +16,16 @@ class DefaultController extends Controller
     
     public function actionSql()
     {
-        $sql =array('Game','Round','Move');
-        foreach ($sql as $s){
-            $m = new $s;
-            $m->dropSqlTable();
-            $m->createSqlTable();
+        if(isset($_POST['reset'])){
+            foreach ($_POST['reset'] as $key=>$val){
+                $m = new $key;
+                $m->dropSqlTable();
+                $m->createSqlTable();
+            }            
         }
+
+        $items =array('Game','Round','Move');
+        $this->render('reset', array('items'=>$items));
     }
     
     public function actionDelete()
