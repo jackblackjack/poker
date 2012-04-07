@@ -13,42 +13,38 @@ class Session extends ActiveRecord
     public $SB = 1;
     public $BB = 2;
     public $stack = 200;
-  //  private $players;
-    public $game;
     
     public function run()
     {
         if(!$this->id) $this->save();
 
-        $lastGame = $this->lastChild('Game');
+        $lastGame = $this->lastChild;
         if($lastGame){
-            if($lastGame->live){
-                $this->game = $lastGame;
-                $this->game->run();
-                return true;
-            }
-            $this->players = $lastGame->players;   
-        }
+            if($lastGame->live)
+                return $lastGame->run();
+            $this->players = $lastGame->players;
+        }  
+
         
-        $this->game = new Game(array(
+        return Game:: model(array(
             'session_id'=>$this->id,
             'players'=>$this->players, 
             'SB'=>$this->SB,
             'BB'=>$this->BB,
             'stack'=>$this->stack
-        ));
-        $this->game->run();
+        ))->run();
     }
     
     public function getPlayers()
     {
-        if(isset($this->players) && $this->players) return $this->players;
+        if(isset($this->players) && $this->players) 
+            return $this->players;
         
         return Player::model()->findAllByAttributes(array(), array('limit'=>4));
     }
     
-    public static function model($className = __CLASS__) 
+    public static function model($params=false) 
     {
-        return new $className;
+        return new self($params);
     }
 }

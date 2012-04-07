@@ -3,22 +3,10 @@ class DefaultController extends Controller
 {
 	public function actionIndex()
 	{
-        //$session = Session::model()->findByPk(9);
-        //$session->run();
-        //$session->game->delete();
-        //$session->run();
-        $combination = new Combination(array(
-            'cards'=>array(
-                array('suit'=>'Diamonds', 'value'=>'Jack'),
-                array('suit'=>'Hearts', 'value'=>'King'),
-                array('suit'=>'Diamonds', 'value'=>10),
-                array('suit'=>'Hearts', 'value'=>10),
-                array('suit'=>'Diamonds', 'value'=>'King'),
-                array('suit'=>'Diamonds', 'value'=>'Jack'),
-                array('suit'=>'Clubs', 'value'=>10),
-            )
-        ));
-        print_r($combination->handValue);
+        $session = new Session;
+        $round = $session->run();
+        $this->render('index', array('round'=>$round));
+
 	}
 	
 	public function actionView()
@@ -28,7 +16,7 @@ class DefaultController extends Controller
     
     public function actionSql()
     {
-        $sql =array('Session','Player','Game','Round','Move');
+        $sql =array('Game','Round','Move');
         foreach ($sql as $s){
             $m = new $s;
             $m->dropSqlTable();
@@ -44,5 +32,19 @@ class DefaultController extends Controller
             $game[0]->delete();
             echo "Game and its children are deleted";
         }
+    }
+    
+    public function actionPlayers()
+    {
+       $a=array(
+            array('name'=>'Paul', 'stack'=>500),
+            array('name'=>'Alex', 'stack'=>500),
+            array('name'=>'Steve', 'stack'=>500),
+            array('name'=>'Nick', 'stack'=>500),        
+       );
+       
+       foreach ($a as $player){
+           Player::model($player)->save();
+       }
     }
 }

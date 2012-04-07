@@ -20,8 +20,8 @@ class Move extends ActiveRecord
         
     }
     
-    public static function model($className = __CLASS__) 
+    public static function model($params=false) 
     {
-        return new $className;
+        return new self($params);
     }
 }

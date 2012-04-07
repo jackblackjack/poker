@@ -3,6 +3,7 @@ class Round extends ActiveRecord
 {
     const SQLTABLE = "round";
     const CHILDREN = "Move";
+    const PARENT = "Game";
     
     public static $sqlFields = array(
         "id"=>"int(11) auto_increment primary key",
@@ -10,58 +11,46 @@ class Round extends ActiveRecord
         "players"=>"text not null",
         "live"=>"int(1) default 1",
         "game_id"=>"int(11) not null",
-  //      "desk"=>"text not null",
         "bank"=>"int(11) not null",
+        "board"=>"text not null",
     );
     public $live = 1;
     public $activeSeat = 0;
-    public $game;
     public $name = 'preflop';
     public $bank = 0;
     public $amount = 0;
     
+    public $chart = array(
+        11=>'Hight card', 20=>'Pair', 22=>'Two pairs', 30=>'Three of a kind', 31.1=>'Straight', 
+        31.2=>'Flush', 32=>'Full house', 40=>'Four of a kind', 50=>'Straight flush'
+    );
+    
     public function run()
     {
         if(!$this->id) $this->save();
-        
-        $lastMove = $this->lastChild('Move');
-        if($this->live && $lastMove){
+        if(!$this->live) return $this->parent->run();
+
+        $lastMove = $this->lastChild;
+        if($lastMove){
             $this->activeSeat = $this->nextActiveSeat($lastMove->seat);
             $this->bank += $lastMove->amount;
             $this->amount = $lastMove->amount;
         }
         $activePlayer = $this->players[$this->activeSeat];
-        if($activePlayer->amount == $this->amount){
+        if($this->amount > 0 && $activePlayer->amount == $this->amount){
             $this->closeRound();
+            $this->save();
+            return $this->parent->run();
         }else{
             $this->players[$this->activeSeat]->move($this);
             $this->save();
         }
-    }
-    
-    function preflop()
-    {
-        
-    }
-    
-    function flop()
-    {
-        
-    }
-    
-    function turn()
-    {
-        
-    }
-    
-    function river()
-    {
-        
+        return $this;
     }
     
     public function showDown()
     {
-        $winner = Combination::model()->comparePlayers($this->table, $this->players);
+        $winner = Combination::model()->comparePlayers($this->board, $this->players);
         $this->players[$winner->seat]->stack += $this->bank;
     }
     
@@ -93,18 +82,17 @@ class Round extends ActiveRecord
             $player->amount = 0;
         }
         $this->live = 0;
-        $this->save();
     }    
     
     public function endGame()
     {
-        $parent = Game::model()->findByPk($this->game_id);
+        $parent = $this->parent;
         $parent->live = 0;
         $parent->save();
     }
     
-    public static function model($className = __CLASS__) 
+    public static function model($params=false) 
     {
-        return new $className;
+        return new self($params);
     }
 }

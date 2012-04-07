@@ -3,21 +3,19 @@ class Game extends ActiveRecord
 {
     const SQLTABLE = "game";
     const CHILDREN = "Round";
+    const PARENT = "Session";
     
     public static $sqlFields = array(
         "id"=>"int(11) auto_increment primary key",
         "session_id"=>"int(11) not null",
         "live"=>"int(1) default 0",
         "players"=>"text not null",
-        "SB"=>"int(11) default 1",
-        "BB"=>"int(11) default 2",
-        "stack"=>"int(11) default 200",
     );
     public $live = 1;
-    public $round;
     public $bank = 0;
     public $deck = array();
-    public $table = array();
+    public $board = array();
+    public $players;
     
     public static $cardSuits = array(
         'h'=>'Hearts', 'd'=>'Diamonds', 'c'=>'Clubs', 's'=>'Spades'
@@ -31,15 +29,13 @@ class Game extends ActiveRecord
     public function run()
     {
         if(!$this->id) $this->save();
+        if(!$this->live) return $this->parent->run();
         
-        $lastRound = $this->lastChild('Round');
-        
+        $lastRound = $this->lastChild;
         if($lastRound && count($lastRound->players)>1){
-            if($lastRound->live){
-                $this->round = $lastRound;
-                $this->round->run();
-                return true;
-            }
+            if($lastRound->live)
+                return $lastRound->run();
+
             $this->deck = $lastRound->deck;
             $this->players = $lastRound->players;
             $this->bank = $lastRound->bank;
@@ -49,17 +45,17 @@ class Game extends ActiveRecord
             $this->giveCards();            
         }
         
-        $this->round = new Round(array(
+        return Round::model(array(
+            'game_id'=>$this->id,
             'players'=>$this->players,
             'bank'=>$this->bank,
-            'game_id'=>$this->id,
-        ));
-        $this->round->run();
+            'board'=>$this->board,
+        ))->run();
     }
 
     public function deal()
     {
-        switch(count($this->table)){
+        switch(count($this->board)){
             case 0:
                 $this->showFlop();
                 break;
@@ -70,7 +66,7 @@ class Game extends ActiveRecord
                 $this->showRiver();
                 break;
         }
-        return $this->table;
+        return $this->board;
     }
 
     protected function seatPlayers()
@@ -102,25 +98,19 @@ class Game extends ActiveRecord
 
     protected function showFlop()
     {
-        $this->table = array(array_shift($this->deck), array_shift($this->deck), array_shift($this->deck));
+        $this->board = array(array_shift($this->deck), array_shift($this->deck), array_shift($this->deck));
     }
     
     protected function showTurn()
     {
-        array_push($this->table, array_shift($this->deck)); 
+        array_push($this->board, array_shift($this->deck)); 
     }
     
     protected function showRiver()
     {
-        array_push($this->table, array_shift($this->deck)); 
+        array_push($this->board, array_shift($this->deck)); 
     }
     
-    public static function model($className = __CLASS__) 
-    {
-        return new $className;
-    }
-    
-
     protected function getDeck()
     {
         if($this->deck) return $this->deck;
@@ -131,5 +121,10 @@ class Game extends ActiveRecord
         }
         shuffle($this->deck);
         return $this->deck;
+    }
+    
+    public static function model($params=false) 
+    {
+        return new self($params);
     }
 }

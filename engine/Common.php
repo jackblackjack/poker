@@ -20,9 +20,9 @@ class Common
 		}
 	}
 	
-    public static function model($className = __CLASS__) 
+    public static function model($className = __CLASS__, $params = false) 
     {
-        return new $className;
+        return new $className($params);
     }
     
     public function getClassName()

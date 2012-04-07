@@ -1,5 +1,5 @@
 <?php
-class Strategy extends ActiveRecord
+class Brain extends ActiveRecord
 {
     const SQLTABLE = "strategy";
     
@@ -23,6 +23,19 @@ class Strategy extends ActiveRecord
         return array('move'=>'bet', 'amount'=>15);
     }
     
+    public function comparePlayers($board, $players)
+    {
+        $values = array();
+        foreach($players as $player){
+            $cards = array_merge($board, $player->cards);
+            $player->handValue = Combination::model($cards)->handValue;
+        }
+        usort($players, function($a, $b){
+            return $a->handValue > $b->handValue;
+        });
+        return $players;
+    }
+    
     public function getRoundHistory()
     {
         return Move::model()->findAllByAttribtes(array('round_id'=>$this->round->id));
@@ -33,8 +46,8 @@ class Strategy extends ActiveRecord
         return Move::model()->findAllByAttribtes(array('game_id'=>$this->round->game_id));
     }
     
-    public static function model($className = __CLASS__) 
+    public static function model($params=false) 
     {
-        return new $className;
+        return new self($params);
     }
 }

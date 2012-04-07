@@ -144,7 +144,7 @@ class ActiveRecord extends Common
     public function dropSqlTable()
     {
         $table = $this::SQLTABLE;
-        $sql = "DROP TABLE $table";
+        $sql = "DROP TABLE if exists $table";
         if(!mysql_query($sql, $this->dbConnection)) echo "wrong query:" . $sql;
     }
     
@@ -206,11 +206,20 @@ class ActiveRecord extends Common
         return $models ? $models[count($models)-1] : false; 
     }
     
-    public function lastChild($className)
+    public function lastChild($className=false)
     {
-        $parentNameId = strtolower($this->className).'_id';
-        $item = $className::model()->findAllByAttributes(array($parentNameId=>$this->id), array('order'=>'id DESC', 'limit'=>1));
+        if(!$className) $className = $this::CHILDREN; 
+        $filed = strtolower($this->className).'_id';
+        $item = $className::model()->findAllByAttributes(array($filed=>$this->id), array('order'=>'id DESC', 'limit'=>1));
         return $item ? $item[0] : false;
+    }
+    
+    public function getParent()
+    {
+        $className = $this::PARENT;
+        if(!$className) return false;
+        $field = strtolower($className).'_id';
+        return $className::model()->findByPk($this->$field);
     }
     
     public static function model($className = __CLASS__) 

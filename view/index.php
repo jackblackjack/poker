@@ -1,5 +1,5 @@
 <?php
-    foreach($dealer->players as $player){
+    foreach($round->players as $player){
         $this->render('_player', array('player'=>$player));
     };
 ?>

@@ -17,26 +17,22 @@ class Player extends ActiveRecord
     public $seat = 0;
     public $strategy;
     public $moveName = "fold";
-    
+    public $handValue = 0;
 
     public function move($round)
     {
         $this->round = $round;
         $this->think();
-        $move = new Move(array(
-                "player_id"=>$this->id,
-                "seat"=>$this->seat,
-                "round_id"=>$round->id,
-                "game_id"=>$round->game_id,
-                "round_name"=>$round->name,
-                "move_name"=>$this->moveName,
-                "amount"=>$this->amount,
-                "stack"=>$this->stack,
-            )
-        );
-        
-        $move->save();
-        $this->round->save();
+        Move::model(array(
+            "player_id"=>$this->id,
+            "seat"=>$this->seat,
+            "round_id"=>$round->id,
+            "game_id"=>$round->game_id,
+            "round_name"=>$round->name,
+            "move_name"=>$this->moveName,
+            "amount"=>$this->amount,
+            "stack"=>$this->stack,
+        ))->save();
     }
 
     public function think()
@@ -45,9 +41,8 @@ class Player extends ActiveRecord
             $this->round->closeRound();
             return;
         }
-        
-        $strategy = new Strategy(array('round'=>$this->round, 'player'=>$this));
-        $decision = $strategy->result;
+
+        $decision = Brain::model(array('round'=>$this->round, 'player'=>$this))->result;
         $this->$decision['move']($decision['amount']);
     }
     
@@ -79,12 +74,12 @@ class Player extends ActiveRecord
     public function fold()
     {
         $this->moveName = 'fold';
-        unset($this->round->players[$this->seat]);
-        $this->round->save();
+        //$this->round->players[$this->seat]->live = 0;
+        $this->live = 0;
     }        
     
-    public static function model($className = __CLASS__) 
+    public static function model($params=false) 
     {
-        return new $className;
+        return new self($params);
     }
 }
