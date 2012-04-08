@@ -9,9 +9,18 @@ class DefaultController extends Controller
 
 	}
 	
-	public function actionView()
+	public function actionReplay()
 	{
-		
+	    $games = Game::model()->findAllByAttributes();
+        $rounds = isset($_GET['game_id']) 
+            ? Round::model()->findAllByAttributes(array('game_id'=>$_GET['game_id'])) 
+            : false;
+        $round = isset($_GET['round_id'])
+            ? Round::model()->findByPk($_GET['round_id']) 
+            : false;
+        if($round && $round->name == "showDown")
+            $round->winners = Brain::model()->comparePlayers($round->players);
+		$this->render('replay', array('games'=>$games, 'rounds'=>$rounds, 'round'=>$round));
 	}
     
     public function actionSql()
@@ -24,7 +33,7 @@ class DefaultController extends Controller
             }            
         }
 
-        $items =array('Game','Round','Move');
+        $items =array('Session', 'Game','Round','Move', 'Player');
         $this->render('reset', array('items'=>$items));
     }
     

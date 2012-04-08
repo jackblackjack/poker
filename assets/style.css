@@ -4,8 +4,13 @@
     border: 3px double;
     margin: 20px;
 }
-.board{
-    clear: both;
+.player_name {
+    color: green;
+    font-weight: bold;
+}
+.board {
+    clear: left;
+    margin: 20px;
     width: 100%;
 }
 .board button{

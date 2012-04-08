@@ -10,15 +10,43 @@ class Combination extends Common
         2=>2, 3=>3, 4=>4, 5=>5, 6=>6, 7=>7, 8=>8, 9=>9, 10=>10, 
         'Jack'=>11, 'Queen'=>12, 'King'=>13, 'Ace'=>14   
     );
-
+    
+    public static $chart = array(
+        110=>'Hight card', 200=>'Pair', 220=>'Two pairs', 300=>'Three of a kind', 311=>'Straight', 
+        312=>'Flush', 320=>'Full house', 400=>'Four of a kind', 500=>'Straight flush'
+    );
+    
     public function getHandValue(){
         $this->adoptCards();
         $this->getDuplicates();
         $this->getFlush();
         $this->getStraight();
-        return $this->combinaionValue*1000000000000000 + $this->combinationHeight*10000000000 + $this->handHeight;
+        return array(
+            'combinationValue'=>array(
+                'name'=>$this::$chart[$this->combinaionValue],
+                'value'=>$this->combinaionValue
+             ), 
+            'combinationHeight'=>array(
+                'name'=>$this->toNames($this->combinationHeight),
+                'value'=>$this->combinationHeight,
+             ), 
+            'handHeight'=>array(
+                'name'=>$this->toNames($this->handHeight),
+                'value'=>$this->handHeight,
+             ), 
+        );
     }
 
+    public function toNames($value)
+    {
+        if(!$value) return 0;
+        $chart = array_flip($this::$cardValues);
+        $result = array();
+        for($i=0; $i<strlen($value); $i+=2){
+            $result[] = $chart[substr($value, $i, 2)*1];
+        }
+        return implode(', ', $result);
+    }
     
     public function adoptCards()
     {
@@ -37,18 +65,30 @@ class Combination extends Common
         if($this->combinaionValue > 40) return;
         $duplicates = array_count_values($this->values);
         arsort($duplicates);
-        $this->combinaionValue = implode('', array_slice($duplicates, 0, 2))*1;
+        $this->combinaionValue = implode('', array_slice($duplicates, 0, 2))*10;
         $duplicates = array_diff($duplicates, array(1));//leave only duplicates
+        
         switch(count($duplicates)){
             case 0: return false; break;
-            case 1: $this->combinaionValue = reset($duplicates)*10; 
-                    $this->combinationHeight = key($duplicates); break;
-            case 2: $this->combinationHeight = $this->getHandHeight(array_slice(array_keys($duplicates),0, 2)); break;
+            case 1: $this->combinaionValue = reset($duplicates)*100; 
+                    $this->combinationHeight = key($duplicates); 
+                    $this->handHeight = $this->getHandHeight(
+                        array_diff($this->values, array(key($duplicates))), 
+                        5-reset($duplicates)
+                    );
+                    break;
+            case 2: $this->combinationHeight = $this->getHandHeight(array_slice(array_keys($duplicates),0, 2));
+                    $this->handHeight = $this->getHandHeight(
+                        array_diff($this->values, array_slice(array_keys($duplicates),0, 2)),
+                        5-(reset($duplicates)+next($duplicates))
+                    );
+                    break;
             case 3: $res = reset($duplicates)==3 ? key($duplicates) : false;
-                    $duplicates = array_diff($duplicates, array(3));
-                    krsort($duplicates);
-                    $res = $res ? array($res, key($duplicates)) : array_slice(array_keys($duplicates),0, 2);
+                    $duplicates1 = array_diff($duplicates, array(3));
+                    krsort($duplicates1);
+                    $res = $res ? array($res, key($duplicates1)) : array_slice(array_keys($duplicates1),0, 2);
                     $this->combinationHeight = $this->getHandHeight($res); break;
+                    $this->handHeight = reset($duplicates)==3 ? 0 : max(array_diff($this->values, $res));
         }
         return true;
     }
@@ -65,11 +105,11 @@ class Combination extends Common
         }
         arsort($values);
         if(end($array) > 4){
-            if($this->getStraight($values)) $this->combinaionValue = 50;
+            if($this->getStraight($values)) $this->combinaionValue = 500;
             else{
-                $this->combinaionValue = 31.2;
+                $this->combinaionValue = 312;
                 $values = array_slice($values, 0, 5);
-                $this->combinationHeight = $this->getHandHeight($values);
+                $this->combinationHeight = $this->getHandHeight = $this->getHandHeight($values);
             }
         }
         return $values;
@@ -77,30 +117,31 @@ class Combination extends Common
     
     public function getStraight($values=false)
     {
-        if($this->combinaionValue > 31.1) return;
+        if($this->combinaionValue > 311) return;
         $array = $values ?  array_unique($values) : array_unique($this->values);
         if(in_array(14, $array)) array_push($array, 1); //ace as 1 too
         arsort($array);
         $array = array_combine(range((count($array)-1),0), $array);
         for($i=count($array)-1; $i>0; $i--){
             if(isset($array[$i-4]) && $array[$i-4] == $array[$i]-4){
-                $this->combinaionValue = 31.1;
-                $this->combinationHeight = $array[$i];
+                $this->combinaionValue = 311;
+                $this->combinationHeight = $this->handHeight = $array[$i];
                 return true;
             } 
         }
         return false;
     }
     
-    public function getHandHeight($values=false)
+    public function getHandHeight($values=false, $count=5)
     {
+        if($count < 1) return 0;
         if($values===false) $values = $this->values;
         $result = '';
         foreach($values as $value){
             $prefix = $value < 10 ? 0 : '';
             $result .= $prefix.$value;
         }
-        return substr($result,0,10)*1;
+        return substr($result,0,$count*2);
     }    
     
     public static function model($params=false) 

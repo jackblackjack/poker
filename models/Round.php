@@ -21,6 +21,7 @@ class Round extends ActiveRecord
     public $bank = 0;
     public $amount = 0;
     public $board = array(); 
+    public $winners = array();
     
     public function run()
     {
@@ -33,6 +34,7 @@ class Round extends ActiveRecord
             $this->bank += $lastMove->amount;
             $this->amount = $lastMove->amount;
         }
+        
         if(!$this->activeSeat) $this->activeSeat = 0;
         $activePlayer = $this->players[$this->activeSeat];
         if($this->amount == $activePlayer->amount && ($this->amount > 0 
@@ -43,38 +45,26 @@ class Round extends ActiveRecord
             return $this->parent->run();
         }else{
             $activePlayer->move($this);
+            $activePlayer->round = ''; //do not save parent
+            if($this->name == 'showDown') 
+                $this->winners = Brain::model()->comparePlayers($this->players);
             $this->save();
         }
         return $this;
     }
     
-    public function showDown()
-    {
-        $winner = Brain::model()->comparePlayers($this->players);
-        $winner->stack += $this->bank;
-    }
-    
-    public function nextActiveSeat($seat=0)
-    {
-        if(!$this->players) return false;
-        //make array starting from active seat
-        $players = array_merge(
-            array_slice($this->players, $seat),
-            array_slice($this->players, 0,$seat)
-        );
-        for($i=1; $i<count($players); $i++){
-            if($players[$i]->live) return $players[$i]->seat;
-        }
-    }
-    
     public function closeRound()
     {
-        if(count($this->players) == 1){
-            $player = end($this->players);
+        $players = array_filter($this->players, function($player){
+            return $player->live == 1;
+        });
+        if(count($players) == 1){
+            $player = end($players);
             $player->stack += $this->bank;
+            $player->save();
             $this->endGame();
         }else if($this->name == 'showDown'){
-            $this->showDown();
+            $this->splitBank();
             $this->endGame();
         }
         
@@ -90,7 +80,31 @@ class Round extends ActiveRecord
         $parent->live = 0;
         $parent->save();
     }
-
+    
+    public function splitBank()
+    {
+        foreach($this->winners as $player){
+            if(!$player->split){
+                $player->stack += $this->bank;
+                $player->save();
+            }
+ 
+        };
+    }
+    
+    public function nextActiveSeat($seat=0)
+    {
+        if(!$this->players) return false;
+        //make array starting from active seat
+        $players = array_merge(
+            array_slice($this->players, $seat),
+            array_slice($this->players, 0,$seat)
+        );
+        for($i=1; $i<count($players); $i++){
+            if($players[$i]->live) return $players[$i]->seat;
+        }
+    }
+    
     public function getName()
     {
         switch(count($this->parent->children)){

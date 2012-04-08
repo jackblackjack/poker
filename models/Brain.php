@@ -27,30 +27,34 @@ class Brain extends ActiveRecord
                 ? array('bet'=>$this->player->round->parent->parent->SB) 
                 : array('call'=>$this->player->round->amount - $this->player->amount);
                 break;
-            case 1: return $this->player->round->bank == 0 
+            case 1: return $this->player->round->bank == 1 
                 ? array('bet'=>$this->player->round->parent->parent->BB) 
                 : array('call'=>$this->player->round->amount - $this->player->amount); 
                 break;
         }
-        if((int)substr($this->handValue, 0, 2) > 11)
-            return array('bet'=>$this->player->round->bank / 1.5);
-        else return array('call'=>$this->player->round->amount);
+        if((int)$this->handValue['combinationValue']['value'] > 110 && $this->player->stack > $this->player->round->amount)
+            return array('bet'=>round($this->player->round->bank / 1.5));
+        else if($this->player->round->amount > 0) return array('call'=>$this->player->round->amount - $this->player->amount);
+        else return array('check'=>$this->player->round->amount - $this->player->amount);
     }
     
     public function flop()
     {
-        return array('call'=>$this->player->round->amount - $this->player->amount);
+        if($this->player->round->amount > 0) return array('call'=>$this->player->round->amount - $this->player->amount);
+        else return array('check'=>$this->player->round->amount - $this->player->amount);
     }
     
     public function turn()
     {
-        return array('call'=>$this->player->round->amount - $this->player->amount);
+        if($this->player->round->amount > 0) return array('call'=>$this->player->round->amount - $this->player->amount);
+        else return array('check'=>$this->player->round->amount - $this->player->amount);
     }
     
     
     public function river()
     {
-        return array('call'=>$this->player->round->amount - $this->player->amount);
+        if($this->player->round->amount > 0) return array('call'=>$this->player->round->amount - $this->player->amount);
+        else return array('check'=>$this->player->round->amount - $this->player->amount);
     }
 
     public function showDown()
@@ -61,9 +65,19 @@ class Brain extends ActiveRecord
     public function comparePlayers($players)
     {
         usort($players, function($a, $b){
-            return $a->handValue > $b->handValue;
+            if($a->handValue['combinationValue']['value'] == $b->handValue['combinationValue']['value']){
+                if($a->handValue['combinationHeight']['value'] == $b->handValue['combinationHeight']['value']){
+                     if($a->handValue['handHeight']['value'] == $b->handValue['handHeight']['value']){
+                         $a->split[] = $b->id;
+                         $b->split[] = $a->id;
+                     };
+                     return $a->handValue['handHeight']['value'] < $b->handValue['handHeight']['value'];                    
+                }
+                return $a->handValue['combinationHeight']['value'] < $b->handValue['combinationHeight']['value'];                
+            }
+            return $a->handValue['combinationValue']['value'] < $b->handValue['combinationValue']['value'];
         });
-        return end($players);
+        return $players;
     }
     
     public function getRoundHistory()
