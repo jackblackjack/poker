@@ -10,10 +10,6 @@
     <span class="player_move"> <?php echo $player->moveName . "-" . $player->amount; ?></span>
     <div class="winner">
         <span class="player_name"><?php echo $player->name; ?></span>
-        <span class="player_hand_value"> <?php echo $player->handValue['combinationValue']['value'].': '; ?></span>
-        <?php if($player->handValue['combinationHeight']['value']):?>
-        <span class="player_hand_value"> <?php echo$player->handValue['combinationHeight']['value'].'; Kicker:'; ?></span>
-        <?php endif;?>
-        <span class="player_hand_value"> <?php echo $player->handValue['handHeight']['value']; ?></span>
+        <span class="player_hand_value"> <? echo $player->invest($round); ?></span><br />
     </div>
 </div>

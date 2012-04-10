@@ -20,6 +20,15 @@ class Common
 		}
 	}
 	
+    public function unsetAttributes(array $attributes)
+    {
+        $class = $this->className; 
+        $cleaner = new $class;
+        foreach($attributes as $field){
+            $this->$field = $cleaner->$field;
+        }
+    }
+    
     public static function model($className = __CLASS__, $params = false) 
     {
         return new $className($params);

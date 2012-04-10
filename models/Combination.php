@@ -5,6 +5,7 @@ class Combination extends Common
     public $suits = array();
     public $values = array();
     private $handValue;
+    private $absoluteValue;
     
     public static $cardValues = array(
         2=>2, 3=>3, 4=>4, 5=>5, 6=>6, 7=>7, 8=>8, 9=>9, 10=>10, 
@@ -35,6 +36,13 @@ class Combination extends Common
                 'value'=>$this->handHeight,
              ), 
         );
+    }
+
+    public function getAbsoluteValue()
+    {
+        $value = $this->handValue;
+        return '0,' . $value['combinationValue']['value'] 
+            . $value['combinationHeight']['value'] . $value['handHeight']['value']; 
     }
 
     public function toNames($value)
@@ -71,7 +79,7 @@ class Combination extends Common
         switch(count($duplicates)){
             case 0: return false; break;
             case 1: $this->combinaionValue = reset($duplicates)*100; 
-                    $this->combinationHeight = key($duplicates); 
+                    $this->combinationHeight = $this->getHandHeight(array(key($duplicates))); 
                     $this->handHeight = $this->getHandHeight(
                         array_diff($this->values, array(key($duplicates))), 
                         5-reset($duplicates)
@@ -125,7 +133,7 @@ class Combination extends Common
         for($i=count($array)-1; $i>0; $i--){
             if(isset($array[$i-4]) && $array[$i-4] == $array[$i]-4){
                 $this->combinaionValue = 311;
-                $this->combinationHeight = $this->handHeight = $array[$i];
+                $this->combinationHeight = $this->handHeight = $this->getHandHeight(array($array[$i]));
                 return true;
             } 
         }
@@ -138,7 +146,7 @@ class Combination extends Common
         if($values===false) $values = $this->values;
         $result = '';
         foreach($values as $value){
-            $prefix = $value < 10 ? 0 : '';
+            $prefix = $value < 10 ? '0' : '';
             $result .= $prefix.$value;
         }
         return substr($result,0,$count*2);

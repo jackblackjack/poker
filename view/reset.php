@@ -1,8 +1,15 @@
-<h3>
-    <a href="/">
-        Home
-    </a>
-</h3>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+    <ul>
+        <li>
+            <a href="/">Home</a>            
+        </li>
+        <li>
+            <a class="newPlayers" href="/default/players">
+                New Players
+            </a>            
+        </li>
+    </ul>
+
 <form method="post">
     <ul>
     <?php  foreach($items as $item): ?>
@@ -16,3 +23,10 @@
     </ul>
     <button>reset</button>
 </form>
+
+<script>
+    $('.newPlayers').click(function(){
+        $.get(this.href);
+        return false;
+    });
+</script>

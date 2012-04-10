@@ -65,18 +65,8 @@ class Brain extends ActiveRecord
     public function comparePlayers($players)
     {
         usort($players, function($a, $b){
-            if($a->handValue['combinationValue']['value'] == $b->handValue['combinationValue']['value']){
-                if($a->handValue['combinationHeight']['value'] == $b->handValue['combinationHeight']['value']){
-                     if($a->handValue['handHeight']['value'] == $b->handValue['handHeight']['value']){
-                         $a->split[] = $b->id;
-                         $b->split[] = $a->id;
-                     };
-                     return $a->handValue['handHeight']['value'] < $b->handValue['handHeight']['value'];                    
-                }
-                return $a->handValue['combinationHeight']['value'] < $b->handValue['combinationHeight']['value'];                
-            }
-            return $a->handValue['combinationValue']['value'] < $b->handValue['combinationValue']['value'];
-        });
+           return $a->absoluteValue < $b->absoluteValue;
+        }); 
         return $players;
     }
     

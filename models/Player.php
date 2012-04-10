@@ -88,8 +88,22 @@ class Player extends ActiveRecord
         $this->live = 0;
     }
     
+    public function invest($round)
+    {
+        $invest = $round->parent->players[$this->seat]->stack - $this->stack;
+        if($round->bank) $invest /= $round->bank;//доля
+        return  $invest; 
+    }
+    
     public static function model($params=false) 
     {
         return new self($params);
+    }
+    
+    public function getAbsoluteValue()
+    {
+        $value = $this->handValue;
+        return '0,' . $value['combinationValue']['value'] 
+            . $value['combinationHeight']['value'] . $value['handHeight']['value']; 
     }
 }

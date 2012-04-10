@@ -43,7 +43,8 @@ class Game extends ActiveRecord
         }else{
             $this->seatPlayers();
             $this->makeDeck();
-            $this->giveCards();            
+            $this->giveCards();
+            $this->save();
         }
         
         return Round::model(array(
@@ -88,7 +89,6 @@ class Game extends ActiveRecord
             $player->live = 1;
             $this->players[$player->seat] = $player;
         }
-        
     }
             
     protected function giveCards()

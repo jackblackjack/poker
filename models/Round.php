@@ -64,6 +64,7 @@ class Round extends ActiveRecord
             $player->save();
             $this->endGame();
         }else if($this->name == 'showDown'){
+            $this->winners = Brain::model()->comparePlayers($this->players);
             $this->splitBank();
             $this->endGame();
         }
@@ -72,23 +73,68 @@ class Round extends ActiveRecord
             $player->amount = 0;
         }
         $this->live = 0;
+        $this->save();
     }    
     
     public function endGame()
     {
+        foreach($this->players as $player){
+            $player->unsetAttributes(array(
+                'cards', 'handValue', 'amount', 'split', 'live'
+            ));
+            $player->save();
+        }
         $parent = $this->parent;
+        $parent->players = $this->players;
         $parent->live = 0;
         $parent->save();
     }
     
     public function splitBank()
     {
-        foreach($this->winners as $player){
-            if(!$player->split){
-                $player->stack += $this->bank;
-                $player->save();
+        $players = $this->winners;
+        foreach($players as $key1=>$player1){
+            if($this->bank > 0){
+                //нахлдим разделяющих место
+                foreach($players as $key2=>$player2){
+                    if($player1->absoluetValue == $player2->absoluteValue){
+                        $player1->split[$player2->seat] = $player2;
+                    }
+                }
+
+                if(count($player1->split) > 1){
+                    foreach($player1->split as $key3=>$splitter){
+                        $prise = $splitter->invest($this) * count($players) * $this->bank / count($player1->split);
+                        if($this->bank >= $prise){
+                            $splitter->stack += $prise;
+                            $this->bank -= $prise;
+                        }else{
+                            $splitter->stack += $this->bank;
+                            $this->bank = 0;
+                        }
+                        if($player1 !== $splitter){
+                            $splitter->live = 0;
+                            $plitter->save();
+                            unset($players[$key3]);
+                        }
+                    }
+                }else{
+                    $prise = $player1->invest($this) * count($players) * $this->bank;
+                    if($this->bank >= $prise){
+                        $player1->stack += $prise;
+                        $this->bank -= $prise;
+                    }else{
+                        $player1->stack += $this->bank;
+                        $this->bank = 0;
+                    }
+                }                
             }
- 
+
+            $player1->split = array();
+            $player1->amount = 0;
+            $player1->save();
+            $this->players[$player1->seat] = $player1;
+            unset($players[$key1]);
         };
     }
     
